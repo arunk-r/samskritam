@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Samskrutam">
+<title>Samskrutam - Verb forms</title>
+<style>
+  body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+         background: #f4f6fa; font-family: "Segoe UI", system-ui, sans-serif; color: #1d2330; }
+  .card { background: #fff; width: min(620px, 94vw); border-radius: 14px; padding: 28px 26px;
+          box-shadow: 0 6px 24px rgba(0,0,0,.08); text-align: center; }
+  .count { color: #6b7385; font-size: 14px; margin-bottom: 14px; }
+  .english { font-size: 38px; font-weight: 600; margin: 6px 0 18px; min-height: 46px; }
+  .forms { text-align: left; min-height: 240px; margin-bottom: 18px; }
+  .form { display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+          padding: 8px 12px; border-bottom: 1px solid #edf0f5; }
+  .form .label { color: #6b7385; font-size: 16px; flex: 0 0 190px; text-align: left; }
+  .form .deva { font-family: "Nirmala UI", "Noto Sans Devanagari", "Mangal", sans-serif; font-size: 32px; font-weight: 700; }
+  .form .iast { color: #3b6e3b; font-size: 20px; flex: 0 0 170px; text-align: right; }
+  .form.present { background: #eef6ee; border-radius: 10px; padding: 14px 12px; border-bottom: 0; margin-bottom: 6px; }
+  .form.present .label { font-weight: 700; color: #1d2330; font-size: 18px; }
+  .form.present .deva { font-size: 48px; }
+  .form.present .iast { font-size: 26px; font-weight: 700; }
+  .prompt { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px;
+            border-bottom: 1px solid #edf0f5; cursor: pointer; }
+  .prompt .label { color: #1d2330; font-size: 17px; font-weight: 600; flex: 0 0 190px; }
+  .prompt .question { color: #1d2330; font-size: 17px; flex: 1; }
+  .prompt .answer-box { flex: 0 0 240px; text-align: right; background: #fff7e0; border: 1px dashed #c9a227;
+                        border-radius: 8px; padding: 6px 10px; color: #6b4e00; font-size: 17px; font-weight: 600; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  button { font-size: 16px; padding: 10px 16px; border: 0; border-radius: 8px; cursor: pointer;
+           background: #e7ebf3; color: #1d2330; }
+  button.primary { background: #2d6cdf; color: #fff; }
+  button:disabled { opacity: .4; cursor: default; }
+  button:hover:not(:disabled) { filter: brightness(0.96); }
+  .hint { color: #8a92a3; font-size: 13px; margin-top: 16px; }
+  @media (max-width: 600px) {
+    body { align-items: flex-start; }
+    .card { width: 100%; min-height: 100vh; border-radius: 0; box-shadow: none; padding: 20px 16px; box-sizing: border-box; }
+    .english { font-size: 30px; }
+    .form, .prompt { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .form .label, .prompt .label, .prompt .question { flex: none; }
+    .form .iast { flex: none; text-align: left; font-size: 18px; }
+    .form .deva { font-size: 28px; }
+    .prompt .answer-box { flex: none; width: 100%; box-sizing: border-box; text-align: left; }
+    button { font-size: 17px; padding: 12px 14px; flex: 1 1 40%; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="count" id="count"></div>
+  <div class="english" id="english"></div>
+  <div class="forms" id="forms"></div>
+  <div class="buttons">
+    <button id="prev">&larr; Previous</button>
+    <button class="primary" id="show">Show next form</button>
+    <button class="primary" id="next">Next verb &rarr;</button>
+    <button id="restart">Restart</button>
+  </div>
+  <div class="hint">Say each form aloud, then press Show for the next one. Keys: Space = Show next, &rarr; = Next verb, &larr; = Previous verb.</div>
+</div>
+
+<script>
+// Forms in PDF column order. Each verb: English, then [Devanagari, IAST] for the 8 forms.
+const FORM_LABELS = [
+  "Present (he/she/it)",
+  "I (aham)",
+  "Imperative (let him)",
+  "Past, masculine",
+  "Past, feminine",
+  "Future",
+  "Having done (ktvA/lyap)",
+  "To do (tumun)"
+];
+
+// Forms 6-8 (Future, ktvA/lyap, tumun) are hidden for now. Set to 8 to show them again.
+const ACTIVE_FORMS = 5;
+
+const VERBS = [
+  { en: "goes", f: [["गच्छति","gachChati"],["गच्छामि","gachChAmi"],["गच्छतु","gachChatu"],["गतवान्","gatavAn"],["गतवती","gatavatii"],["गमिष्यति","gamiShyati"],["गत्वा","gatvA"],["गन्तुम्","gantum"]] },
+  { en: "comes", f: [["आगच्छति","AgachChati"],["आगच्छामि","AgachChAmi"],["आगच्छतु","AgachChatu"],["आगतवान्","AgatavAn"],["आगतवती","Agatavatii"],["आगमिष्यति","AgamiShyati"],["आगत्य","Agatya"],["आगन्तुम्","Agantum"]] },
+  { en: "reads", f: [["पठति","paThati"],["पठामि","paThAmi"],["पठतु","paThatu"],["पठितवान्","paThitavAn"],["पठितवती","paThitavatii"],["पठिष्यति","paThiShyati"],["पठित्वा","paThitvA"],["पठितुम्","paThitum"]] },
+  { en: "plays", f: [["क्रीडति","kriiDati"],["क्रीडामि","kriiDAmi"],["क्रीडतु","kriiDatu"],["क्रीडितवान्","kriiDitavAn"],["क्रीडितवती","kriiDitavatii"],["क्रीडिष्यति","kriiDiShyati"],["क्रीडित्वा","kriiDitvA"],["क्रीडितुम्","kriiDitum"]] },
+  { en: "writes", f: [["लिखति","likhati"],["लिखामि","likhAmi"],["लिखतु","likhatu"],["लिखितवान्","likhitavAn"],["लिखितवती","likhitavatii"],["लेखिष्यति","lekhiShyati"],["लिखित्वा","likhitvA"],["लेखितुम्","lekhitum"]] },
+  { en: "eats", f: [["खादति","khAdati"],["खादामि","khAdAmi"],["खादतु","khAdatu"],["खादितवान्","khAditavAn"],["खादितवती","khAditavatii"],["खादिष्यति","khAdiShyati"],["खादित्वा","khAditvA"],["खादितुम्","khAditum"]] },
+  { en: "drinks", f: [["पिबति","pibati"],["पिबामि","pibAmi"],["पिबतु","pibatu"],["पीतवान्","piitavAn"],["पीतवती","piitavatii"],["पास्यति","pAsyati"],["पीत्वा","piitvA"],["पातुम्","pAtum"]] },
+  { en: "stands", f: [["उत्तिष्ठति","uttiShThati"],["उत्तिष्ठामि","uttiShThAmi"],["उत्तिष्ठतु","uttiShThatu"],["उत्थितवान्","utthitavAn"],["उत्थितवती","utthitavatii"],["उत्थास्यति","utthAsyati"],["उत्थाय","utthAya"],["उत्थातुम्","utthAtum"]] },
+  { en: "sits", f: [["उपविशति","upavishati"],["उपविशामि","upavishAmi"],["उपविशतु","upavishatu"],["उपविष्टवान्","upaviShTavAn"],["उपविष्टवती","upaviShTavatii"],["उपवेक्ष्यति","upavekShyati"],["उपविश्य","upavishya"],["उपवेष्टुम्","upaveShTum"]] },
+  { en: "speaks", f: [["वदति","vadati"],["वदामि","vadAmi"],["वदतु","vadatu"],["उक्तवान्","uktavAn"],["उक्तवती","uktavatii"],["वदिष्यति","vadiShyati"],["उक्त्वा","uktvA"],["वक्तुम्","vakttum"]] },
+  { en: "gives", f: [["ददाति","dadAti"],["ददामि","dadAmi"],["ददातु","dadAtu"],["दत्तवान्","dattavAn"],["दत्तवती","dattavatii"],["दास्यति","dAsyati"],["दत्त्वा","dattvA"],["दातुम्","dAtum"]] },
+  { en: "sees", f: [["पश्यति","pashyati"],["पश्यामि","pashyAmi"],["पश्यतु","pashyatu"],["दृष्टवान्","dRRiShTavAn"],["दृष्टवती","dRRiShTavatii"],["द्रक्ष्यति","drakShyati"],["दृष्ट्वा","dRRiShTvA"],["द्रष्टुम्","draShTum"]] },
+  { en: "does", f: [["करोति","karoti"],["करोमि","karomi"],["करोतु","karotu"],["कृतवान्","kRRitavAn"],["कृतवती","kRRitavatii"],["करिष्यति","kariShyati"],["कृत्वा","kRRitvA"],["कर्तुम्","kartum"]] },
+  { en: "asks", f: [["पृच्छति","pRRichChati"],["पृच्छामि","pRRichChAmi"],["पृच्छतु","pRRichChatu"],["पृष्टवान्","pRRiShTavAn"],["पृष्टवती","pRRiShTavatii"],["प्रक्ष्यति","prakShyati"],["पृष्ट्वा","pRRiShTvA"],["प्रष्टुम्","praShTum"]] },
+  { en: "meets", f: [["मिलति","milati"],["मिलामि","milAmi"],["मिलतु","milatu"],["मिलितवान्","militavAn"],["मिलितवती","militavatii"],["मेलिष्यति","meliShyati"],["मिलित्वा","militvA"],["मेलितुम्","melitum"]] },
+  { en: "laughs", f: [["हसति","hasati"],["हसामि","hasAmi"],["हसतु","hasatu"],["हसितवान्","hasitavAn"],["हसितवती","hasitavatii"],["हसिष्यति","hasiShyati"],["हसित्वा","hasitvA"],["हसितुम्","hasitum"]] },
+  { en: "runs", f: [["धावति","dhAvati"],["धावामि","dhAvAmi"],["धावतु","dhAvatu"],["धावितवान्","dhAvitavAn"],["धावितवती","dhAvitavatii"],["धाविष्यति","dhAviShyati"],["धावित्वा","dhAvitvA"],["धावितुम्","dhAvitum"]] },
+  { en: "falls", f: [["पतति","patati"],["पतामि","patAmi"],["पततु","patatu"],["पतितवान्","patitavAn"],["पतितवती","patitavatii"],["पतिष्यति","patiShyati"],["पतित्वा","patitvA"],["पतितुम्","patitum"]] },
+  { en: "carries", f: [["नयति","nayati"],["नयामि","nayAmi"],["नयतु","nayatu"],["नीतवान्","niitavAn"],["नीतवती","niitavatii"],["नेष्यति","neShyati"],["नीत्वा","niitvA"],["नेतुम्","netum"]] },
+  { en: "brings", f: [["आनयति","Anayati"],["आनयामि","AnayAmi"],["आनयतु","Anayatu"],["आनीतवान्","AniitavAn"],["आनीतवती","Aniitavatii"],["आनेष्यति","AneShyati"],["आनीय","Aniiya"],["आनेतुम्","Anetum"]] },
+  { en: "condemns", f: [["निन्दति","nindati"],["निन्दामि","nindAmi"],["निन्दतु","nindatu"],["निन्दितवान्","ninditavAn"],["निन्दितवती","ninditavatii"],["निन्दिष्यति","nindiShyati"],["निन्दित्वा","ninditvA"],["निन्दितुम्","ninditum"]] },
+  { en: "remembers", f: [["स्मरति","smarati"],["स्मरामि","smarAmi"],["स्मरतु","smaratu"],["स्मृतवान्","smRRitavAn"],["स्मृतवती","smRRitavatii"],["स्मरिष्यति","smariShyati"],["स्मृत्वा","smRRitvA"],["स्मर्तुम्","smartum"]] },
+  { en: "leaves", f: [["त्यजति","tyajati"],["त्यजामि","tyajAmi"],["त्यजतु","tyajatu"],["त्यक्तवान्","tyakttavAn"],["त्यक्तवती","tyakttavatii"],["त्यक्ष्यति","tyakShyati"],["त्यक्त्वा","tyaktvA"],["त्यक्तुम्","tyaktum"]] },
+  { en: "buys", f: [["क्रीणाति","kriiNAti"],["क्रीणामि","kriiNAmi"],["क्रीणातु","kriiNAtu"],["क्रीतवान्","kriitavAn"],["क्रीतवती","kriitavatii"],["क्रेष्यति","kreShyati"],["क्रीत्वा","kriitvA"],["क्रेतुम्","kretum"]] },
+  { en: "knows", f: [["जानाति","jAnAti"],["जानामि","jAnAmi"],["जानातु","jAnAtu"],["ज्ञातवान्","j~nAtavAn"],["ज्ञातवती","j~nAtavatii"],["ज्ञास्यति","j~nAsyati"],["ज्ञात्वा","j~nAtvA"],["ज्ञातुम्","j~nAtum"]] },
+  { en: "sleeps", f: [["निद्राति","nidrAti"],["निद्रामि","nidrAmi"],["निद्रातु","nidrAtu"],["निद्राणवान्","nidrANavAn"],["निद्राणवती","nidrANavatii"],["निद्रास्यति","nidrAsyati"],["निद्राय","nidrAya"],["निद्रातुम्","nidrAtum"]] },
+  { en: "receives", f: [["स्वीकरोति","sviikaroti"],["स्वीकरोमि","sviikaromi"],["स्वीकरोतु","sviikarotu"],["स्वीकृतवान्","sviikRRitavAn"],["स्वीकृतवती","sviikRRitavatii"],["स्वीकरिष्यति","sviikariShyati"],["स्वीकृत्य","sviikRRitya"],["स्वीकर्तुम्","sviikartum"]] },
+  { en: "hears", f: [["शृणोति","shRNoti"],["शृणोमि","shRNomi"],["शृणोतु","shRNotu"],["श्रुतवान्","shRutavAn"],["श्रुतवती","shRutavatii"],["श्रोष्यति","shroShyati"],["श्रुत्वा","shRutvA"],["श्रोतुम्","shrotum"]] },
+  { en: "holds", f: [["गृह्णाति","gRRihNAti"],["गृह्णामि","gRRihNAmi"],["गृह्णातु","gRRihNAtu"],["गृहीतवान्","gRRihiitavAn"],["गृहीतवती","gRRihiitavatii"],["ग्रहीष्यति","grahiiShyati"],["गृहीत्वा","gRRihiitvA"],["ग्रहीतुम्","grahiitum"]] },
+  { en: "cries", f: [["रोदिति","roditi"],["रोदिमि","rodimi"],["रोदितु","roditu"],["रुदितवान्","ruditavAn"],["रुदितवती","ruditavatii"],["रोदिष्यति","rodiShyati"],["रुदित्वा","ruditvA"],["रोदितुम्","roditum"]] },
+  { en: "worships", f: [["पूजयति","pUjayati"],["पूजयामि","pUjayAmi"],["पूजयतु","pUjayatu"],["पूजितवान्","pUjitavAn"],["पूजितवती","pUjitavatii"],["पूजयिष्यति","pUjayiShyati"],["पूजयित्वा","pUjayitvA"],["पूजयितुम्","pUjayitum"]] },
+  { en: "sends", f: [["प्रेषयति","preShayati"],["प्रेषयामि","preShayAmi"],["प्रेषयतु","preShayatu"],["प्रेषितवान्","preShitavAn"],["प्रेषितवती","preShitavatii"],["प्रेषयिष्यति","preShayiShyati"],["प्रेषयित्वा","preShayitvaa"],["प्रेषयितुम्","preShayitum"]] },
+  { en: "washes", f: [["प्रक्षालयति","prakShAlayati"],["प्रक्षालयामि","prakShAlayAmi"],["प्रक्षालयतु","prakShAlayatu"],["प्रक्षालितवान्","prakShAlitavAn"],["प्रक्षालितवती","prakShAlitavatii"],["प्रक्षालयिष्यति","prakShAlayiShyati"],["प्रक्षाल्य","prakShAlya"],["प्रक्षालयितुम्","prakShAlayitum"]] },
+  { en: "puts", f: [["स्थापयति","sthApayati"],["स्थापयामि","sthApayAmi"],["स्थापयतु","sthApayatu"],["स्थापितवान्","sthApitavAn"],["स्थापितवती","sthApitavatii"],["स्थापयिष्यति","sthApayiShyati"],["स्थापयित्वा","sthApayitvA"],["स्थापयितुम्","sthApayitum"]] },
+  { en: "indicates / suggests", f: [["सूचयति","suuchayati"],["सूचयामि","suuchayAmi"],["सूचयतु","suuchayatu"],["सूचितवान्","suuchitavAn"],["सूचितवती","suuchitavatii"],["सूचयिष्यति","suuchayiShyati"],["सूचयित्वा","suuchayitvA"],["सूचयितुम्","suuchayitum"]] },
+  { en: "scolds", f: [["तर्जयति","tarjayati"],["तर्जयामि","tarjayAmi"],["तर्जयतु","tarjayatu"],["तर्जितवान्","tarjitavAn"],["तर्जितवती","tarjitavatii"],["तर्जयिष्यति","tarjayiShyati"],["तर्जयित्वा","tarjayitvA"],["तर्जयितुम्","tarjayitum"]] },
+  { en: "calls", f: [["आह्वयति","Ahvayati"],["आह्वयामि","AhvayAmi"],["आह्वयतु","Ahvayatu"],["आहूतवान्","AhuutavAn"],["आहूतवती","Ahuutavatii"],["आह्वास्यति","AhvAsyati"],["आहूय","Ahuuya"],["आह्वातुम्","AhvAtum"]] },
+  { en: "likes", f: [["इच्छति","ichChati"],["इच्छामि","ichChAmi"],["इच्छतु","ichChatu"],["इष्टवान्","iShTavAn"],["इष्टवती","iShTavatii"],["एषिष्यति","eShiShyati"],["इष्ट्वा","iShTvA"],["एष्टुम्","eShTum"]] },
+  { en: "is (to be)", f: [["अस्ति","asti"],["अस्मि","asmi"],["अस्तु","astu"],["आसीत्","Asiit"],["आसीत्","Asiit"],["भविष्यति","bhaviShyati"],["भूत्वा","bhuutvA"],["भवितुम्","bhavitum"]] },
+  { en: "becomes (to be)", f: [["भवति","bhavati"],["भवामि","bhavAmi"],["भवतु","bhavatu"],["अभवत्","abhavat"],["अभवत्","abhavat"],["भविष्यति","bhaviShyati"],["भूत्वा","bhuutvA"],["भवितुम्","bhavitum"]] }
+];
+
+let index = 0;
+let revealed = 0; // how many forms are shown for the current verb (0..8)
+
+const el = id => document.getElementById(id);
+
+function render() {
+  const v = VERBS[index];
+  el("count").textContent = `${index + 1} / ${VERBS.length}`;
+  el("english").textContent = v.en;
+
+  const rows = [];
+  for (let i = 0; i < ACTIVE_FORMS; i++) {
+    const [deva, iast] = v.f[i];
+    if (i < revealed) {
+      rows.push(`<div class="form"><span class="label">${FORM_LABELS[i]}</span><span class="deva">${deva}</span><span class="iast">${iast}</span></div>`);
+    } else {
+      // Question visible, answer hidden. Click the row or Show to reveal it.
+      rows.push(`<div class="prompt" data-row="${i}"><span class="label">${FORM_LABELS[i]}</span><span class="question">${v.en}</span><span class="answer-box">Say it, then Show</span></div>`);
+    }
+  }
+  el("forms").innerHTML = rows.join("");
+  el("forms").querySelectorAll(".prompt").forEach(p => p.addEventListener("click", () => {
+    revealed = Math.max(revealed, Number(p.dataset.row) + 1); render();
+  }));
+
+  el("show").disabled = revealed >= ACTIVE_FORMS;
+  el("show").textContent = revealed >= ACTIVE_FORMS ? "All forms shown" : "Show next form";
+  el("prev").disabled = index === 0;
+  el("next").disabled = index === VERBS.length - 1;
+}
+
+function showNext() { if (revealed < ACTIVE_FORMS) { revealed++; render(); } }
+function next() { if (index < VERBS.length - 1) { index++; revealed = 0; render(); } }
+function prev() { if (index > 0) { index--; revealed = 0; render(); } }
+function restart() { index = 0; revealed = 0; render(); }
+
+el("show").addEventListener("click", showNext);
+el("next").addEventListener("click", next);
+el("prev").addEventListener("click", prev);
+el("restart").addEventListener("click", restart);
+
+document.addEventListener("keydown", e => {
+  if (e.key === " ") { e.preventDefault(); showNext(); }
+  else if (e.key === "ArrowRight") next();
+  else if (e.key === "ArrowLeft") prev();
+});
+
+render();
+</script>
+</body>
+</html>
