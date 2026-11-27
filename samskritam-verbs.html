@@ -59,6 +59,7 @@
   <div class="tabs">
     <button id="tab-words" class="active">Words</button>
     <button id="tab-rel">Relationships</button>
+    <button id="tab-time">Time</button>
   </div>
   <div class="count" id="count"></div>
   <div class="english" id="english"></div>
@@ -176,10 +177,17 @@ const RELS = [
   { en: "paternal uncle's son", g: "Cousin", f: [["पितृव्यपुत्र","pitṛvyaputra"]] }
 ];
 
+const TIME = [
+  { en: "15 minutes (unverified)", g: "Time", f: [["घण्टापादः","ghaṇṭāpādaḥ"]] },
+  { en: "30 minutes, half an hour (unverified)", g: "Time", f: [["अर्धघण्टा","ardhaghaṇṭā"]] },
+  { en: "45 minutes (unverified)", g: "Time", f: [["पादोनघण्टा","pādonaghaṇṭā"]] }
+];
+
 // Two tabs share one card. Each tab has its own list and position.
 const TABS = {
   words: { items: VERBS, active: ACTIVE_FORMS, label: i => FORM_LABELS[i], word: "verb" },
-  rel:   { items: RELS,  active: 1,            label: i => "Sanskrit",     word: "term" }
+  rel:   { items: RELS,  active: 1,            label: i => "Sanskrit",     word: "term" },
+  time:  { items: TIME,  active: 1,            label: i => "Sanskrit",     word: "term" }
 };
 let mode = "words";
 let index = 0;
@@ -192,14 +200,15 @@ function render() {
   const v = t.items[index];
   el("tab-words").classList.toggle("active", mode === "words");
   el("tab-rel").classList.toggle("active", mode === "rel");
-  el("count").textContent = (mode === "rel" ? `${v.g} - ` : "") + `${index + 1} / ${t.items.length}`;
+  el("tab-time").classList.toggle("active", mode === "time");
+  el("count").textContent = (mode !== "words" ? `${v.g} - ` : "") + `${index + 1} / ${t.items.length}`;
   el("english").textContent = v.en;
 
   const rows = [];
   for (let i = 0; i < t.active; i++) {
     const [deva, iast] = v.f[i];
     if (i < revealed) {
-      rows.push(`<div class="form${mode === "rel" ? " present" : ""}"><span class="label">${t.label(i)}</span><span class="deva">${deva}</span><span class="iast">${iast}</span></div>`);
+      rows.push(`<div class="form${mode !== "words" ? " present" : ""}"><span class="label">${t.label(i)}</span><span class="deva">${deva}</span><span class="iast">${iast}</span></div>`);
     } else {
       // Question visible, answer hidden. Click the row or Show to reveal it.
       rows.push(`<div class="prompt" data-row="${i}"><span class="label">${t.label(i)}</span><span class="question">${v.en}</span><span class="answer-box">Say it, then Show</span></div>`);
@@ -230,6 +239,7 @@ el("prev").addEventListener("click", prev);
 el("restart").addEventListener("click", restart);
 el("tab-words").addEventListener("click", () => setMode("words"));
 el("tab-rel").addEventListener("click", () => setMode("rel"));
+el("tab-time").addEventListener("click", () => setMode("time"));
 
 document.addEventListener("keydown", e => {
   if (e.key === " ") { e.preventDefault(); showNext(); }
