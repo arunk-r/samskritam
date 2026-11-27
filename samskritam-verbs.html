@@ -7,49 +7,49 @@
 <meta name="apple-mobile-web-app-title" content="Samskrutam">
 <title>Samskrutam - Study</title>
 <style>
-  body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 16px;
          background: #f4f6fa; font-family: "Segoe UI", system-ui, sans-serif; color: #1d2330; }
-  .card { background: #fff; width: min(620px, 94vw); border-radius: 14px; padding: 28px 26px;
+  .card { background: #fff; width: 100%; max-width: 760px; min-width: 0; box-sizing: border-box; border-radius: 14px; padding: 28px 26px;
           box-shadow: 0 6px 24px rgba(0,0,0,.08); text-align: center; }
   .count { color: #6b7385; font-size: 14px; margin-bottom: 14px; }
-  .english { font-size: 38px; font-weight: 600; margin: 6px 0 18px; min-height: 46px; }
-  .forms { text-align: left; min-height: 240px; margin-bottom: 18px; }
-  .form { display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  .english { font-size: 38px; font-weight: 600; margin: 6px 0 18px; overflow-wrap: anywhere; }
+  .forms { text-align: left; margin-bottom: 18px; }
+  .form { display: grid; grid-template-columns: minmax(0, 190px) minmax(0, 1fr) minmax(0, 1fr); align-items: baseline; gap: 12px;
           padding: 8px 12px; border-bottom: 1px solid #edf0f5; }
-  .form .label { color: #6b7385; font-size: 16px; flex: 0 0 190px; text-align: left; }
-  .form .deva { font-family: "Nirmala UI", "Noto Sans Devanagari", "Mangal", sans-serif; font-size: 32px; font-weight: 700; }
-  .form .iast { color: #3b6e3b; font-size: 20px; flex: 0 0 170px; text-align: right; }
+  .form .label { color: #6b7385; font-size: 16px; text-align: left; overflow-wrap: anywhere; }
+  .form .deva { font-family: "Nirmala UI", "Noto Sans Devanagari", "Mangal", sans-serif; font-size: 32px; font-weight: 700; overflow-wrap: anywhere; }
+  .form .iast { color: #3b6e3b; font-size: 20px; text-align: left; overflow-wrap: anywhere; }
   .form.present { background: #eef6ee; border-radius: 10px; padding: 14px 12px; border-bottom: 0; margin-bottom: 6px; }
   .form.present .label { font-weight: 700; color: #1d2330; font-size: 18px; }
-  .form.present .deva { font-size: 48px; }
-  .form.present .iast { font-size: 26px; font-weight: 700; }
-  .prompt { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px;
+  .form.present .deva { font-size: 40px; }
+  .form.present .iast { font-size: 24px; font-weight: 700; }
+  .prompt { display: grid; grid-template-columns: minmax(0, 190px) minmax(0, 1fr) minmax(0, 220px); align-items: center; gap: 12px; padding: 10px 12px;
             border-bottom: 1px solid #edf0f5; cursor: pointer; }
-  .prompt .label { color: #1d2330; font-size: 17px; font-weight: 600; flex: 0 0 190px; }
-  .prompt .question { color: #1d2330; font-size: 17px; flex: 1; }
-  .prompt .answer-box { flex: 0 0 240px; text-align: right; background: #fff7e0; border: 1px dashed #c9a227;
+  .prompt .label { color: #1d2330; font-size: 17px; font-weight: 600; overflow-wrap: anywhere; }
+  .prompt .question { color: #1d2330; font-size: 17px; overflow-wrap: anywhere; }
+  .prompt .answer-box { text-align: right; background: #fff7e0; border: 1px dashed #c9a227;
                         border-radius: 8px; padding: 6px 10px; color: #6b4e00; font-size: 17px; font-weight: 600; }
-  .buttons { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-  button { font-size: clamp(12px, 2.4vw, 16px); padding: clamp(6px, 1.2vw, 10px) clamp(6px, 1.4vw, 16px); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 0; border-radius: 8px; cursor: pointer;
+  .buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+  button { font-size: 16px; padding: 10px 14px; min-width: 0; border: 0; border-radius: 8px; cursor: pointer;
            background: #e7ebf3; color: #1d2330; }
   button.primary { background: #2d6cdf; color: #fff; }
   button:disabled { opacity: .4; cursor: default; }
   button:hover:not(:disabled) { filter: brightness(0.96); }
-  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-  .tabs button { flex: 1; font-weight: 600; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .tabs button { flex: 1 1 120px; font-weight: 600; }
   .tabs button.active { background: #2d6cdf; color: #fff; }
   .short { display: none; }
-  @media (max-width: 420px) { .full { display: none; } .short { display: inline; } }
   .hint { color: #8a92a3; font-size: 13px; margin-top: 16px; }
   @media (max-width: 600px) {
-    body { align-items: flex-start; }
-    .card { width: 100%; min-height: 100vh; border-radius: 0; box-shadow: none; padding: 20px 16px; box-sizing: border-box; }
+    body { align-items: flex-start; padding: 0; }
+    .card { min-height: 100vh; border-radius: 0; box-shadow: none; padding: 20px 16px; }
     .english { font-size: 30px; }
-    .form, .prompt { flex-direction: column; align-items: flex-start; gap: 4px; }
-    .form .label, .prompt .label, .prompt .question { flex: none; }
-    .form .iast { flex: none; text-align: left; font-size: 18px; }
-    .form .deva { font-size: 28px; }
-    .prompt .answer-box { flex: none; width: 100%; box-sizing: border-box; text-align: left; }
+    .form, .prompt { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 4px; }
+    .form .iast { font-size: 18px; }
+    .form .deva { font-size: 30px; }
+    .form.present .deva { font-size: 34px; }
+    .form.present .iast { font-size: 20px; }
+    .prompt .answer-box { text-align: left; }
     .hint { display: none; }
   }
 </style>
