@@ -191,7 +191,7 @@ const TIME = [
 ];
 
 // Pronouns tab: pronoun rows from chart 595 (Samskritabharati s2s S1). Cells use only the verb data above,
-// by form index: 0 present, 1 I, 2 we, 3 imperative, 4 past masc, 5 past fem. Anything else is "not in data".
+// by form index: 0 present, 1 I, 2 we, 3 imperative, 4 past masc, 5 past fem. Other pronouns are skipped.
 const PRON_CELLS = [
   { label: "I", d: "अहम्", i: "aham", k: 1 },
   { label: "we", d: "वयम्", i: "vayam", k: 2 },
@@ -212,11 +212,6 @@ const PRON_CELLS = [
   { label: "this, neuter (etat), present", d: "एतत्", i: "etat", k: 0 },
   { label: "this, neuter (etat), imperative", d: "एतत्", i: "etat", k: 3 }
 ];
-const PRON_NODATA = [
-  ["te","ते","te"],["tāḥ","ताः","tāḥ"],["tāni","तानि","tāni"],["ete","एते","ete"],["etāḥ","एताः","etāḥ"],["etāni","एतानि","etāni"],
-  ["bhavān","भवान्","bhavān"],["bhavantaḥ","भवन्तः","bhavantaḥ"],["bhavatī","भवती","bhavatī"],["bhavatyaḥ","भवत्यः","bhavatyaḥ"]
-];
-
 // Tabs share one card. Each tab has its own list and position.
 const TABS = {
   words: { items: VERBS, active: ACTIVE_FORMS, label: i => FORM_LABELS[i], word: "verb" },
@@ -252,7 +247,6 @@ function render() {
       rows.push(`<div class="prompt" data-row="${i}"><span class="label">${t.label(i)}</span><span class="question">${v.en}</span><span class="answer-box">Say it, then Show</span></div>`);
     }
   }
-  if (mode === "pron") PRON_NODATA.forEach(n => rows.push(`<div class="form"><span class="label">${n[0]}</span><span class="deva">${n[1]}</span><span class="iast">not in data</span></div>`));
   el("forms").innerHTML = rows.join("");
   el("forms").querySelectorAll(".prompt").forEach(p => p.addEventListener("click", () => {
     revealed = Math.max(revealed, Number(p.dataset.row) + 1); render();
