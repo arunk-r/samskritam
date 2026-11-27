@@ -9,12 +9,11 @@
 <style>
   body { margin: 0; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; box-sizing: border-box; padding: 16px;
          background: #f4f6fa; font-family: "Segoe UI", system-ui, sans-serif; color: #1d2330; }
-  .card { background: #fff; width: 100%; max-width: 760px; min-width: 0; box-sizing: border-box; border-radius: 14px; padding: 28px 26px;
+  .card { background: #fff; width: 100%; max-width: 760px; min-width: 0; box-sizing: border-box; height: calc(100vh - 32px); height: calc(100dvh - 32px); display: flex; flex-direction: column; border-radius: 14px; padding: 28px 26px;
           box-shadow: 0 6px 24px rgba(0,0,0,.08); text-align: center; }
   .count { color: #6b7385; font-size: 14px; margin-bottom: 14px; }
   .english { font-size: 38px; font-weight: 600; margin: 6px 0 18px; min-height: 2.6em; display: flex; align-items: center; justify-content: center; overflow-wrap: anywhere; }
-  .forms { text-align: left; margin-bottom: 18px; }
-  .forms[data-mode="rel"], .forms[data-mode="time"] { min-height: 120px; }
+  .forms { text-align: left; margin-bottom: 18px; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
   .form, .prompt { min-height: 64px; box-sizing: border-box; }
   .form { display: grid; grid-template-columns: minmax(0, 190px) minmax(0, 1fr) minmax(0, 1fr); align-items: baseline; gap: 12px;
           padding: 8px 12px; border-bottom: 1px solid #edf0f5; }
@@ -44,7 +43,7 @@
   .hint { color: #8a92a3; font-size: 13px; margin-top: 16px; }
   @media (max-width: 600px) {
     body { padding: 0; }
-    .card { min-height: 100vh; border-radius: 0; box-shadow: none; padding: 20px 16px; }
+    .card { height: 100vh; height: 100dvh; border-radius: 0; box-shadow: none; padding: 20px 16px; }
     .english { font-size: 30px; }
     .form, .prompt { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 4px; }
     .form .iast { font-size: 18px; }
@@ -53,7 +52,6 @@
     .form.present .iast { font-size: 20px; }
     .prompt .answer-box { text-align: left; }
     .form, .prompt { min-height: 104px; }
-    .forms[data-mode="rel"], .forms[data-mode="time"] { min-height: 190px; }
     .hint { display: none; }
   }
 </style>
@@ -251,7 +249,6 @@ function render() {
       rows.push(`<div class="prompt" data-row="${i}"><span class="label">${t.label(i)}</span><span class="question">${v.en}</span><span class="answer-box">Say it, then Show</span></div>`);
     }
   }
-  el("forms").dataset.mode = mode;
   el("forms").innerHTML = rows.join("");
   el("forms").querySelectorAll(".prompt").forEach(p => p.addEventListener("click", () => {
     revealed = Math.max(revealed, Number(p.dataset.row) + 1); render();
@@ -265,29 +262,13 @@ function render() {
   el("next").disabled = index === t.items.length - 1;
 }
 
-// Keep the top of the card in view after a tab or card change, without moving the page otherwise.
-function keepTop() { const r = document.querySelector(".card").getBoundingClientRect(); if (r.top < 0) window.scrollBy(0, r.top); }
+// The page never scrolls: the forms area scrolls inside the card. Back to its top on a tab or card change.
+function keepTop() { el("forms").scrollTop = 0; }
 function showNext() { if (revealed < TABS[mode].active) { revealed++; render(); } }
 function next() { if (index < TABS[mode].items.length - 1) { index++; revealed = 0; render(); keepTop(); } }
 function prev() { if (index > 0) { index--; revealed = 0; render(); keepTop(); } }
 function restart() { shuffle(TABS[mode].items); index = 0; revealed = 0; render(); }
 function setMode(m) { mode = m; index = 0; revealed = 0; render(); keepTop(); }
-
-// Measure the tallest card of every tab (all forms revealed) and use it as the forms area's minimum height,
-// so the button row stays in one place on every tab and card. Re-measured on resize.
-function fitHeight() {
-  const box = el("forms"), keep = [mode, index, revealed];
-  let max = 0;
-  box.style.minHeight = "0";
-  for (const m of Object.keys(TABS)) {
-    mode = m;
-    TABS[m].items.forEach((_, i) => { index = i; revealed = TABS[m].active; render(); max = Math.max(max, box.scrollHeight); });
-  }
-  [mode, index, revealed] = keep;
-  box.style.minHeight = max + "px";
-  render();
-}
-window.addEventListener("resize", fitHeight);
 
 el("show").addEventListener("click", showNext);
 el("next").addEventListener("click", next);
@@ -306,7 +287,7 @@ document.addEventListener("keydown", e => {
 
 shuffle(VERBS);
 shuffle(RELS);
-fitHeight();
+render();
 </script>
 </body>
 </html>
