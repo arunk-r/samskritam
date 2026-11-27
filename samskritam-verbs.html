@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Samskrutam">
-<title>Samskrutam - Verb forms</title>
+<title>Samskrutam - Study</title>
 <style>
   body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
          background: #f4f6fa; font-family: "Segoe UI", system-ui, sans-serif; color: #1d2330; }
@@ -35,6 +35,9 @@
   button.primary { background: #2d6cdf; color: #fff; }
   button:disabled { opacity: .4; cursor: default; }
   button:hover:not(:disabled) { filter: brightness(0.96); }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tabs button { flex: 1; font-weight: 600; }
+  .tabs button.active { background: #2d6cdf; color: #fff; }
   .short { display: none; }
   @media (max-width: 420px) { .full { display: none; } .short { display: inline; } }
   .hint { color: #8a92a3; font-size: 13px; margin-top: 16px; }
@@ -53,16 +56,20 @@
 </head>
 <body>
 <div class="card">
+  <div class="tabs">
+    <button id="tab-words" class="active">Words</button>
+    <button id="tab-rel">Relationships</button>
+  </div>
   <div class="count" id="count"></div>
   <div class="english" id="english"></div>
   <div class="forms" id="forms"></div>
   <div class="buttons">
     <button id="prev"><span class="full">&larr; Previous</span><span class="short">&larr; Prev</span></button>
     <button class="primary" id="show"><span class="full">Show next form</span><span class="short">Show</span></button>
-    <button class="primary" id="next"><span class="full">Next verb &rarr;</span><span class="short">Next &rarr;</span></button>
+    <button class="primary" id="next"><span class="full">Next &rarr;</span><span class="short">Next &rarr;</span></button>
     <button id="restart"><span class="full">Restart</span><span class="short">Restart</span></button>
   </div>
-  <div class="hint">Say each form aloud, then press Show for the next one. Keys: Space = Show next, &rarr; = Next verb, &larr; = Previous verb.</div>
+  <div class="hint">Say each form aloud, then press Show for the next one. Keys: Space = Show next, &rarr; = Next card, &larr; = Previous card.</div>
 </div>
 
 <script>
@@ -134,24 +141,68 @@ function shuffle(arr) {
   return arr;
 }
 
+const RELS = [
+  { en: "father", g: "Immediate family", f: [["पिता","pitā"]] },
+  { en: "mother", g: "Immediate family", f: [["माता","mātā"]] },
+  { en: "son", g: "Immediate family", f: [["पुत्र","putra"]] },
+  { en: "daughter", g: "Immediate family", f: [["पुत्री","putrī"]] },
+  { en: "brother", g: "Immediate family", f: [["भ्राता","bhrātā"]] },
+  { en: "elder brother", g: "Immediate family", f: [["अग्रज","agraja"]] },
+  { en: "younger brother", g: "Immediate family", f: [["अनुज","anuja"]] },
+  { en: "sister", g: "Immediate family", f: [["भगिनी","bhaginī"]] },
+  { en: "husband", g: "Immediate family", f: [["पति / भर्ता","pati / bhartā"]] },
+  { en: "wife", g: "Immediate family", f: [["पत्नी / भार्या","patnī / bhāryā"]] },
+  { en: "paternal grandfather", g: "Grandparents & grandchildren", f: [["पितामह","pitāmaha"]] },
+  { en: "paternal grandmother", g: "Grandparents & grandchildren", f: [["पितामही","pitāmahī"]] },
+  { en: "maternal grandfather", g: "Grandparents & grandchildren", f: [["मातामह","mātāmaha"]] },
+  { en: "maternal grandmother", g: "Grandparents & grandchildren", f: [["मातामही","mātāmahī"]] },
+  { en: "grandson", g: "Grandparents & grandchildren", f: [["पौत्र","pautra"]] },
+  { en: "granddaughter", g: "Grandparents & grandchildren", f: [["पौत्री","pautrī"]] },
+  { en: "great-grandfather", g: "Two levels up/down", f: [["प्रपितामह","prapitāmaha"]] },
+  { en: "great-grandmother", g: "Two levels up/down", f: [["प्रपितामही","prapitāmahī"]] },
+  { en: "great-grandson", g: "Two levels up/down", f: [["प्रपौत्र","prapautra"]] },
+  { en: "great-granddaughter", g: "Two levels up/down", f: [["प्रपौत्री","prapautrī"]] },
+  { en: "paternal uncle (father's younger brother)", g: "Uncles & aunts", f: [["पितृव्य","pitṛvya"]] },
+  { en: "maternal uncle", g: "Uncles & aunts", f: [["मातुल","mātula"]] },
+  { en: "paternal aunt", g: "Uncles & aunts", f: [["पितृष्वसा","pitṛṣvasā"]] },
+  { en: "maternal aunt", g: "Uncles & aunts", f: [["मातृष्वसा","mātṛṣvasā"]] },
+  { en: "father-in-law", g: "In-laws", f: [["श्वशुर","śvaśura"]] },
+  { en: "mother-in-law", g: "In-laws", f: [["श्वश्रू","śvaśrū"]] },
+  { en: "son-in-law", g: "In-laws", f: [["जामाता","jāmātā"]] },
+  { en: "daughter-in-law", g: "In-laws", f: [["स्नुषा","snuṣā"]] },
+  { en: "husband's younger brother", g: "In-laws", f: [["देवर","devara"]] },
+  { en: "husband's sister", g: "In-laws", f: [["ननान्दृ","nanāndṛ"]] },
+  { en: "brother's wife", g: "In-laws", f: [["भ्रातृजाया","bhrātṛjāyā"]] },
+  { en: "paternal uncle's son", g: "Cousin", f: [["पितृव्यपुत्र","pitṛvyaputra"]] }
+];
+
+// Two tabs share one card. Each tab has its own list and position.
+const TABS = {
+  words: { items: VERBS, active: ACTIVE_FORMS, label: i => FORM_LABELS[i], word: "verb" },
+  rel:   { items: RELS,  active: 1,            label: i => "Sanskrit",     word: "term" }
+};
+let mode = "words";
 let index = 0;
-let revealed = 0; // how many forms are shown for the current verb (0..8)
+let revealed = 0; // how many forms are shown for the current card
 
 const el = id => document.getElementById(id);
 
 function render() {
-  const v = VERBS[index];
-  el("count").textContent = `${index + 1} / ${VERBS.length}`;
+  const t = TABS[mode];
+  const v = t.items[index];
+  el("tab-words").classList.toggle("active", mode === "words");
+  el("tab-rel").classList.toggle("active", mode === "rel");
+  el("count").textContent = (mode === "rel" ? `${v.g} - ` : "") + `${index + 1} / ${t.items.length}`;
   el("english").textContent = v.en;
 
   const rows = [];
-  for (let i = 0; i < ACTIVE_FORMS; i++) {
+  for (let i = 0; i < t.active; i++) {
     const [deva, iast] = v.f[i];
     if (i < revealed) {
-      rows.push(`<div class="form"><span class="label">${FORM_LABELS[i]}</span><span class="deva">${deva}</span><span class="iast">${iast}</span></div>`);
+      rows.push(`<div class="form${mode === "rel" ? " present" : ""}"><span class="label">${t.label(i)}</span><span class="deva">${deva}</span><span class="iast">${iast}</span></div>`);
     } else {
       // Question visible, answer hidden. Click the row or Show to reveal it.
-      rows.push(`<div class="prompt" data-row="${i}"><span class="label">${FORM_LABELS[i]}</span><span class="question">${v.en}</span><span class="answer-box">Say it, then Show</span></div>`);
+      rows.push(`<div class="prompt" data-row="${i}"><span class="label">${t.label(i)}</span><span class="question">${v.en}</span><span class="answer-box">Say it, then Show</span></div>`);
     }
   }
   el("forms").innerHTML = rows.join("");
@@ -159,23 +210,26 @@ function render() {
     revealed = Math.max(revealed, Number(p.dataset.row) + 1); render();
   }));
 
-  el("show").disabled = revealed >= ACTIVE_FORMS;
-  el("show").innerHTML = revealed >= ACTIVE_FORMS
+  el("show").disabled = revealed >= t.active;
+  el("show").innerHTML = revealed >= t.active
     ? '<span class="full">All forms shown</span><span class="short">All shown</span>'
     : '<span class="full">Show next form</span><span class="short">Show</span>';
   el("prev").disabled = index === 0;
-  el("next").disabled = index === VERBS.length - 1;
+  el("next").disabled = index === t.items.length - 1;
 }
 
-function showNext() { if (revealed < ACTIVE_FORMS) { revealed++; render(); } }
-function next() { if (index < VERBS.length - 1) { index++; revealed = 0; render(); } }
+function showNext() { if (revealed < TABS[mode].active) { revealed++; render(); } }
+function next() { if (index < TABS[mode].items.length - 1) { index++; revealed = 0; render(); } }
 function prev() { if (index > 0) { index--; revealed = 0; render(); } }
-function restart() { shuffle(VERBS); index = 0; revealed = 0; render(); }
+function restart() { shuffle(TABS[mode].items); index = 0; revealed = 0; render(); }
+function setMode(m) { mode = m; index = 0; revealed = 0; render(); }
 
 el("show").addEventListener("click", showNext);
 el("next").addEventListener("click", next);
 el("prev").addEventListener("click", prev);
 el("restart").addEventListener("click", restart);
+el("tab-words").addEventListener("click", () => setMode("words"));
+el("tab-rel").addEventListener("click", () => setMode("rel"));
 
 document.addEventListener("keydown", e => {
   if (e.key === " ") { e.preventDefault(); showNext(); }
@@ -184,6 +238,7 @@ document.addEventListener("keydown", e => {
 });
 
 shuffle(VERBS);
+shuffle(RELS);
 render();
 </script>
 </body>
