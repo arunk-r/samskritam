@@ -43,15 +43,21 @@
   .hint { color: #8a92a3; font-size: 13px; margin-top: 16px; }
   @media (max-width: 600px) {
     body { padding: 0; }
-    .card { height: 100vh; height: 100dvh; border-radius: 0; box-shadow: none; padding: 20px 16px; }
-    .english { font-size: 30px; }
-    .form, .prompt { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 4px; }
-    .form .iast { font-size: 18px; }
-    .form .deva { font-size: 30px; }
-    .form.present .deva { font-size: 34px; }
-    .form.present .iast { font-size: 20px; }
-    .prompt .answer-box { text-align: left; }
-    .form, .prompt { min-height: 104px; }
+    .card { height: 100vh; height: 100dvh; border-radius: 0; box-shadow: none; padding: 16px 12px; }
+    .tabs, .count, .english, .buttons { flex: 0 0 auto; }
+    .tabs { margin-bottom: 10px; }
+    .english { font-size: 26px; margin: 4px 0 10px; }
+    .forms { flex: 1 1 0; min-height: 0; overflow-y: auto; margin-bottom: 12px; }
+    .form, .prompt { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; padding: 6px 8px; min-height: 72px; }
+    .form .label, .prompt .label { flex: 0 1 auto; max-width: 48%; font-size: 14px; }
+    .form .deva { flex: 1 1 40%; font-size: 26px; }
+    .form .iast { flex: 1 1 100%; font-size: 17px; }
+    .form.present { padding: 8px; }
+    .form.present .label { font-size: 15px; }
+    .form.present .deva { font-size: 30px; }
+    .form.present .iast { font-size: 19px; }
+    .prompt .question { flex: 1 1 40%; font-size: 15px; }
+    .prompt .answer-box { flex: 1 1 100%; text-align: left; padding: 4px 8px; font-size: 15px; }
     .hint { display: none; }
   }
 </style>
