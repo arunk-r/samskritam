@@ -60,6 +60,7 @@
     <button id="tab-words" class="active">Words</button>
     <button id="tab-rel">Relationships</button>
     <button id="tab-time">Time</button>
+    <button id="tab-pron">Pronouns</button>
   </div>
   <div class="count" id="count"></div>
   <div class="english" id="english"></div>
@@ -189,11 +190,39 @@ const TIME = [
   { en: "11:45, quarter to twelve (owner-supplied)", g: "Time", f: [["पादोन-द्वादशवादनम्","pādona-dvādaśavādanam"]] }
 ];
 
-// Two tabs share one card. Each tab has its own list and position.
+// Pronouns tab: pronoun rows from chart 595 (Samskritabharati s2s S1). Cells use only the verb data above,
+// by form index: 0 present, 1 I, 2 we, 3 imperative, 4 past masc, 5 past fem. Anything else is "not in data".
+const PRON_CELLS = [
+  { label: "I", d: "अहम्", i: "aham", k: 1 },
+  { label: "we", d: "वयम्", i: "vayam", k: 2 },
+  { label: "he, masc. (sa), present", d: "सः", i: "saH", k: 0 },
+  { label: "he, masc. (sa), imperative", d: "सः", i: "saH", k: 3 },
+  { label: "he, masc. (sa), past masc.", d: "सः", i: "saH", k: 4 },
+  { label: "she (sA), present", d: "सा", i: "sA", k: 0 },
+  { label: "she (sA), imperative", d: "सा", i: "sA", k: 3 },
+  { label: "she (sA), past fem.", d: "सा", i: "sA", k: 5 },
+  { label: "this, masc. (eShaH), present", d: "एषः", i: "eShaH", k: 0 },
+  { label: "this, masc. (eShaH), imperative", d: "एषः", i: "eShaH", k: 3 },
+  { label: "this, masc. (eShaH), past masc.", d: "एषः", i: "eShaH", k: 4 },
+  { label: "this, fem. (eShA), present", d: "एषा", i: "eShA", k: 0 },
+  { label: "this, fem. (eShA), imperative", d: "एषा", i: "eShA", k: 3 },
+  { label: "this, fem. (eShA), past fem.", d: "एषा", i: "eShA", k: 5 },
+  { label: "that, neuter (tat), present", d: "तत्", i: "tat", k: 0 },
+  { label: "that, neuter (tat), imperative", d: "तत्", i: "tat", k: 3 },
+  { label: "this, neuter (etat), present", d: "एतत्", i: "etat", k: 0 },
+  { label: "this, neuter (etat), imperative", d: "एतत्", i: "etat", k: 3 }
+];
+const PRON_NODATA = [
+  ["te","ते","te"],["tAH","ताः","tAH"],["tAni","तानि","tAni"],["ete","एते","ete"],["etAH","एताः","etAH"],["etAni","एतानि","etAni"],
+  ["bhavAn","भवान्","bhavAn"],["bhavantaH","भवन्तः","bhavantaH"],["bhavatii","भवती","bhavatii"],["bhavatyaH","भवत्यः","bhavatyaH"]
+];
+
+// Tabs share one card. Each tab has its own list and position.
 const TABS = {
   words: { items: VERBS, active: ACTIVE_FORMS, label: i => FORM_LABELS[i], word: "verb" },
   rel:   { items: RELS,  active: 1,            label: i => "Sanskrit",     word: "term" },
-  time:  { items: TIME,  active: 1,            label: i => "Sanskrit",     word: "term" }
+  time:  { items: TIME,  active: 1,            label: i => "Sanskrit",     word: "term" },
+  pron:  { items: VERBS, active: PRON_CELLS.length, label: i => PRON_CELLS[i].label, word: "verb" }
 };
 let mode = "words";
 let index = 0;
@@ -207,19 +236,23 @@ function render() {
   el("tab-words").classList.toggle("active", mode === "words");
   el("tab-rel").classList.toggle("active", mode === "rel");
   el("tab-time").classList.toggle("active", mode === "time");
-  el("count").textContent = (mode !== "words" ? `${v.g} - ` : "") + `${index + 1} / ${t.items.length}`;
+  el("tab-pron").classList.toggle("active", mode === "pron");
+  el("count").textContent = (mode === "pron" ? "Pronouns (verb forms from the data) - " : mode !== "words" ? `${v.g} - ` : "") + `${index + 1} / ${t.items.length}`;
   el("english").textContent = v.en;
 
   const rows = [];
   for (let i = 0; i < t.active; i++) {
-    const [deva, iast] = v.f[i];
+    let deva, iast;
+    if (mode === "pron") { const c = PRON_CELLS[i], w = v.f[c.k]; deva = c.d + " " + w[0]; iast = c.i + " " + w[1]; }
+    else [deva, iast] = v.f[i];
     if (i < revealed) {
-      rows.push(`<div class="form${mode !== "words" ? " present" : ""}"><span class="label">${t.label(i)}</span><span class="deva">${deva}</span><span class="iast">${iast}</span></div>`);
+      rows.push(`<div class="form${mode === "rel" || mode === "time" ? " present" : ""}"><span class="label">${t.label(i)}</span><span class="deva">${deva}</span><span class="iast">${iast}</span></div>`);
     } else {
       // Question visible, answer hidden. Click the row or Show to reveal it.
       rows.push(`<div class="prompt" data-row="${i}"><span class="label">${t.label(i)}</span><span class="question">${v.en}</span><span class="answer-box">Say it, then Show</span></div>`);
     }
   }
+  if (mode === "pron") PRON_NODATA.forEach(n => rows.push(`<div class="form"><span class="label">${n[0]}</span><span class="deva">${n[1]}</span><span class="iast">not in data</span></div>`));
   el("forms").innerHTML = rows.join("");
   el("forms").querySelectorAll(".prompt").forEach(p => p.addEventListener("click", () => {
     revealed = Math.max(revealed, Number(p.dataset.row) + 1); render();
@@ -246,6 +279,7 @@ el("restart").addEventListener("click", restart);
 el("tab-words").addEventListener("click", () => setMode("words"));
 el("tab-rel").addEventListener("click", () => setMode("rel"));
 el("tab-time").addEventListener("click", () => setMode("time"));
+el("tab-pron").addEventListener("click", () => setMode("pron"));
 
 document.addEventListener("keydown", e => {
   if (e.key === " ") { e.preventDefault(); showNext(); }
