@@ -273,6 +273,22 @@ function prev() { if (index > 0) { index--; revealed = 0; render(); keepTop(); }
 function restart() { shuffle(TABS[mode].items); index = 0; revealed = 0; render(); }
 function setMode(m) { mode = m; index = 0; revealed = 0; render(); keepTop(); }
 
+// Measure the tallest card of every tab (all forms revealed) and use it as the forms area's minimum height,
+// so the button row stays in one place on every tab and card. Re-measured on resize.
+function fitHeight() {
+  const box = el("forms"), keep = [mode, index, revealed];
+  let max = 0;
+  box.style.minHeight = "0";
+  for (const m of Object.keys(TABS)) {
+    mode = m;
+    TABS[m].items.forEach((_, i) => { index = i; revealed = TABS[m].active; render(); max = Math.max(max, box.scrollHeight); });
+  }
+  [mode, index, revealed] = keep;
+  box.style.minHeight = max + "px";
+  render();
+}
+window.addEventListener("resize", fitHeight);
+
 el("show").addEventListener("click", showNext);
 el("next").addEventListener("click", next);
 el("prev").addEventListener("click", prev);
@@ -290,7 +306,7 @@ document.addEventListener("keydown", e => {
 
 shuffle(VERBS);
 shuffle(RELS);
-render();
+fitHeight();
 </script>
 </body>
 </html>
