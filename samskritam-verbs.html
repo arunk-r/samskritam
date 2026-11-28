@@ -45,9 +45,10 @@
     body { padding: 0; }
     .card { height: 100vh; height: 100dvh; border-radius: 0; box-shadow: none; padding: 16px 12px; }
     .tabs, .count, .english, .buttons { flex: 0 0 auto; }
-    .tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-bottom: 10px; }
+    .tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-bottom: 10px; }
     .buttons { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
     .tabs button, .buttons button { font-size: 13px; padding: 10px 2px; white-space: nowrap; }
+    .tabs button { font-size: 12px; padding: 10px 1px; }
     .full { display: none; }
     .short { display: inline; }
     .english { font-size: 21px; line-height: 1.25; min-height: 0; margin: 4px 0 8px; }
@@ -73,6 +74,7 @@
     <button id="tab-rel"><span class="full">Relationships</span><span class="short">Relations</span></button>
     <button id="tab-time">Time</button>
     <button id="tab-pron">Pronouns</button>
+    <button id="tab-num">Numbers</button>
   </div>
   <div class="count" id="count"></div>
   <div class="english" id="english"></div>
@@ -224,12 +226,65 @@ const PRON_CELLS = [
   { label: "this, neuter (etat), present", d: "एतत्", i: "etat", k: 0 },
   { label: "this, neuter (etat), imperative", d: "एतत्", i: "etat", k: 3 }
 ];
+// Numbers tab: 1-40 as cardinal stems/forms from en.wikibooks.org/wiki/Sanskrit/Numbers (first listed variant for 19, 29, 39).
+const NUMBERS_ALL = [
+  { en: "1 - one", g: "Numbers 1-10", f: [["एकः","ekaḥ"]] },
+  { en: "2 - two", g: "Numbers 1-10", f: [["द्वौ","dvau"]] },
+  { en: "3 - three", g: "Numbers 1-10", f: [["त्रयः","trayaḥ"]] },
+  { en: "4 - four", g: "Numbers 1-10", f: [["चत्वारः","catvāraḥ"]] },
+  { en: "5 - five", g: "Numbers 1-10", f: [["पञ्च","pañca"]] },
+  { en: "6 - six", g: "Numbers 1-10", f: [["षट्","ṣaṭ"]] },
+  { en: "7 - seven", g: "Numbers 1-10", f: [["सप्त","sapta"]] },
+  { en: "8 - eight", g: "Numbers 1-10", f: [["अष्ट","aṣṭa"]] },
+  { en: "9 - nine", g: "Numbers 1-10", f: [["नव","nava"]] },
+  { en: "10 - ten", g: "Numbers 1-10", f: [["दश","daśa"]] },
+  { en: "11 - eleven", g: "Numbers 11-20", f: [["एकादश","ekādaśa"]] },
+  { en: "12 - twelve", g: "Numbers 11-20", f: [["द्वादश","dvādaśa"]] },
+  { en: "13 - thirteen", g: "Numbers 11-20", f: [["त्रयोदश","trayodaśa"]] },
+  { en: "14 - fourteen", g: "Numbers 11-20", f: [["चतुर्दश","caturdaśa"]] },
+  { en: "15 - fifteen", g: "Numbers 11-20", f: [["पञ्चदश","pañcadaśa"]] },
+  { en: "16 - sixteen", g: "Numbers 11-20", f: [["षोडश","ṣoḍaśa"]] },
+  { en: "17 - seventeen", g: "Numbers 11-20", f: [["सप्तदश","saptadaśa"]] },
+  { en: "18 - eighteen", g: "Numbers 11-20", f: [["अष्टादश","aṣṭādaśa"]] },
+  { en: "19 - nineteen", g: "Numbers 11-20", f: [["नवदश","navadaśa"]] },
+  { en: "20 - twenty", g: "Numbers 11-20", f: [["विंशति","viṃśati"]] },
+  { en: "21 - twenty-one", g: "Numbers 21-30", f: [["एकविंशति","ekaviṃśati"]] },
+  { en: "22 - twenty-two", g: "Numbers 21-30", f: [["द्वाविंशति","dvāviṃśati"]] },
+  { en: "23 - twenty-three", g: "Numbers 21-30", f: [["त्रयोविंशति","trayoviṃśati"]] },
+  { en: "24 - twenty-four", g: "Numbers 21-30", f: [["चतुर्विंशति","caturviṃśati"]] },
+  { en: "25 - twenty-five", g: "Numbers 21-30", f: [["पञ्चविंशति","pañcaviṃśati"]] },
+  { en: "26 - twenty-six", g: "Numbers 21-30", f: [["षड्विंशति","ṣaḍviṃśati"]] },
+  { en: "27 - twenty-seven", g: "Numbers 21-30", f: [["सप्तविंशति","saptaviṃśati"]] },
+  { en: "28 - twenty-eight", g: "Numbers 21-30", f: [["अष्टाविंशति","aṣṭāviṃśati"]] },
+  { en: "29 - twenty-nine", g: "Numbers 21-30", f: [["नवविंशति","navaviṃśati"]] },
+  { en: "30 - thirty", g: "Numbers 21-30", f: [["त्रिंशत्","triṃśat"]] },
+  { en: "31 - thirty-one", g: "Numbers 31-40", f: [["एकत्रिंशत्","ekatriṃśat"]] },
+  { en: "32 - thirty-two", g: "Numbers 31-40", f: [["द्वात्रिंशत्","dvātriṃśat"]] },
+  { en: "33 - thirty-three", g: "Numbers 31-40", f: [["त्रयस्त्रिंशत्","trayastriṃśat"]] },
+  { en: "34 - thirty-four", g: "Numbers 31-40", f: [["चतुस्त्रिंशत्","catustriṃśat"]] },
+  { en: "35 - thirty-five", g: "Numbers 31-40", f: [["पञ्चत्रिंशत्","pañcatriṃśat"]] },
+  { en: "36 - thirty-six", g: "Numbers 31-40", f: [["षट्त्रिंशत्","ṣaṭtriṃśat"]] },
+  { en: "37 - thirty-seven", g: "Numbers 31-40", f: [["सप्तत्रिंशत्","saptatriṃśat"]] },
+  { en: "38 - thirty-eight", g: "Numbers 31-40", f: [["अष्टात्रिंशत्","aṣṭātriṃśat"]] },
+  { en: "39 - thirty-nine", g: "Numbers 31-40", f: [["एकोनचत्वारिंशत्","ekonacatvāriṃśat"]] },
+  { en: "40 - forty", g: "Numbers 31-40", f: [["चत्वारिंशत्","catvāriṃśat"]] }
+];
+const NUMBERS = [];
+// Each visit: 10 random cards from each range (1-10, 11-20, 21-30, 31-40), then shuffled together.
+function pickNumbers() {
+  NUMBERS.length = 0;
+  for (let r = 0; r < 4; r++) NUMBERS.push(...shuffle(NUMBERS_ALL.slice(r * 10, r * 10 + 10)).slice(0, 10));
+  shuffle(NUMBERS);
+}
+pickNumbers();
+
 // Tabs share one card. Each tab has its own list and position.
 const TABS = {
   words: { items: VERBS, active: ACTIVE_FORMS, label: i => FORM_LABELS[i], word: "verb" },
   rel:   { items: RELS,  active: 1,            label: i => "Sanskrit",     word: "term" },
   time:  { items: TIME,  active: 1,            label: i => "Sanskrit",     word: "term" },
-  pron:  { items: VERBS, active: PRON_CELLS.length, label: i => PRON_CELLS[i].label, word: "verb" }
+  pron:  { items: VERBS, active: PRON_CELLS.length, label: i => PRON_CELLS[i].label, word: "verb" },
+  num:   { items: NUMBERS, active: 1,          label: i => "Sanskrit",     word: "number" }
 };
 let mode = "words";
 let index = 0;
@@ -244,6 +299,7 @@ function render() {
   el("tab-rel").classList.toggle("active", mode === "rel");
   el("tab-time").classList.toggle("active", mode === "time");
   el("tab-pron").classList.toggle("active", mode === "pron");
+  el("tab-num").classList.toggle("active", mode === "num");
   el("count").textContent = (mode === "pron" ? "Pronouns (verb forms from the data) - " : mode !== "words" ? `${v.g} - ` : "") + `${index + 1} / ${t.items.length}`;
   el("english").textContent = v.en;
 
@@ -253,7 +309,7 @@ function render() {
     if (mode === "pron") { const c = PRON_CELLS[i], w = v.f[c.k]; deva = c.d + " " + w[0]; iast = c.i + " " + w[1]; }
     else [deva, iast] = v.f[i];
     if (i < revealed) {
-      rows.push(`<div class="form${mode === "rel" || mode === "time" ? " present" : ""}"><span class="label">${t.label(i)}</span><span class="deva">${deva}</span><span class="iast">${iast}</span></div>`);
+      rows.push(`<div class="form${mode === "rel" || mode === "time" || mode === "num" ? " present" : ""}"><span class="label">${t.label(i)}</span><span class="deva">${deva}</span><span class="iast">${iast}</span></div>`);
     } else {
       // Question visible, answer hidden. Click the row or Show to reveal it.
       rows.push(`<div class="prompt" data-row="${i}"><span class="label">${t.label(i)}</span><span class="question">${v.en}</span><span class="answer-box">Say it, then Show</span></div>`);
@@ -278,7 +334,7 @@ function showNext() { if (revealed < TABS[mode].active) { revealed++; render(); 
 function next() { if (index < TABS[mode].items.length - 1) { index++; revealed = 0; render(); keepTop(); } }
 function prev() { if (index > 0) { index--; revealed = 0; render(); keepTop(); } }
 function restart() { shuffle(TABS[mode].items); index = 0; revealed = 0; render(); }
-function setMode(m) { mode = m; index = 0; revealed = 0; render(); keepTop(); }
+function setMode(m) { mode = m; if (m === "num") pickNumbers(); index = 0; revealed = 0; render(); keepTop(); }
 
 el("show").addEventListener("click", showNext);
 el("next").addEventListener("click", next);
@@ -288,6 +344,7 @@ el("tab-words").addEventListener("click", () => setMode("words"));
 el("tab-rel").addEventListener("click", () => setMode("rel"));
 el("tab-time").addEventListener("click", () => setMode("time"));
 el("tab-pron").addEventListener("click", () => setMode("pron"));
+el("tab-num").addEventListener("click", () => setMode("num"));
 
 document.addEventListener("keydown", e => {
   if (e.key === " ") { e.preventDefault(); showNext(); }
