@@ -269,14 +269,9 @@ const NUMBERS_ALL = [
   { en: "39 - thirty-nine", g: "Numbers 31-40", f: [["एकोनचत्वारिंशत्","ekonacatvāriṃśat"]] },
   { en: "40 - forty", g: "Numbers 31-40", f: [["चत्वारिंशत्","catvāriṃśat"]] }
 ];
-const NUMBERS = [];
-// Each visit: 10 random cards from each range (1-10, 11-20, 21-30, 31-40), then shuffled together.
-function pickNumbers() {
-  NUMBERS.length = 0;
-  for (let r = 0; r < 4; r++) NUMBERS.push(...shuffle(NUMBERS_ALL.slice(r * 10, r * 10 + 10)).slice(0, 10));
-  shuffle(NUMBERS);
-}
-pickNumbers();
+// Four groups of ten, in order. Digit and English name stay visible; each row's Sanskrit is revealed by click or Show.
+const NUM_GROUPS = [0, 1, 2, 3].map(r => ({ en: `${r * 10 + 1} - ${r * 10 + 10}`, g: "Numbers", rows: NUMBERS_ALL.slice(r * 10, r * 10 + 10) }));
+const numShown = new Set(); // rows already revealed in the current group (Numbers tab)
 
 // Tabs share one card. Each tab has its own list and position.
 const TABS = {
@@ -284,7 +279,7 @@ const TABS = {
   rel:   { items: RELS,  active: 1,            label: i => "Sanskrit",     word: "term" },
   time:  { items: TIME,  active: 1,            label: i => "Sanskrit",     word: "term" },
   pron:  { items: VERBS, active: PRON_CELLS.length, label: i => PRON_CELLS[i].label, word: "verb" },
-  num:   { items: NUMBERS, active: 1,          label: i => "Sanskrit",     word: "number" }
+  num:   { items: NUM_GROUPS, active: 10,     label: i => "",             word: "group" }
 };
 let mode = "words";
 let index = 0;
@@ -305,11 +300,17 @@ function render() {
 
   const rows = [];
   for (let i = 0; i < t.active; i++) {
+    if (mode === "num") {
+      const r = v.rows[i], [d, s] = r.f[0], [digit, name] = r.en.split(" - ");
+      if (numShown.has(i)) rows.push(`<div class="form"><span class="label">${digit} - ${name}</span><span class="deva">${d}</span><span class="iast">${s}</span></div>`);
+      else rows.push(`<div class="prompt" data-row="${i}"><span class="label">${digit}</span><span class="question">${name}</span><span class="answer-box">Say it, then Show</span></div>`);
+      continue;
+    }
     let deva, iast;
     if (mode === "pron") { const c = PRON_CELLS[i], w = v.f[c.k]; deva = c.d + " " + w[0]; iast = c.i + " " + w[1]; }
     else [deva, iast] = v.f[i];
     if (i < revealed) {
-      rows.push(`<div class="form${mode === "rel" || mode === "time" || mode === "num" ? " present" : ""}"><span class="label">${t.label(i)}</span><span class="deva">${deva}</span><span class="iast">${iast}</span></div>`);
+      rows.push(`<div class="form${mode === "rel" || mode === "time" ? " present" : ""}"><span class="label">${t.label(i)}</span><span class="deva">${deva}</span><span class="iast">${iast}</span></div>`);
     } else {
       // Question visible, answer hidden. Click the row or Show to reveal it.
       rows.push(`<div class="prompt" data-row="${i}"><span class="label">${t.label(i)}</span><span class="question">${v.en}</span><span class="answer-box">Say it, then Show</span></div>`);
@@ -317,7 +318,9 @@ function render() {
   }
   el("forms").innerHTML = rows.join("");
   el("forms").querySelectorAll(".prompt").forEach(p => p.addEventListener("click", () => {
-    revealed = Math.max(revealed, Number(p.dataset.row) + 1); render();
+    if (mode === "num") { numShown.add(Number(p.dataset.row)); revealed = numShown.size; }
+    else revealed = Math.max(revealed, Number(p.dataset.row) + 1);
+    render();
   }));
 
   el("show").disabled = revealed >= t.active;
@@ -330,11 +333,16 @@ function render() {
 
 // The page never scrolls: the forms area scrolls inside the card. Back to its top on a tab or card change.
 function keepTop() { el("forms").scrollTop = 0; }
-function showNext() { if (revealed < TABS[mode].active) { revealed++; render(); } }
-function next() { if (index < TABS[mode].items.length - 1) { index++; revealed = 0; render(); keepTop(); } }
-function prev() { if (index > 0) { index--; revealed = 0; render(); keepTop(); } }
-function restart() { shuffle(TABS[mode].items); index = 0; revealed = 0; render(); }
-function setMode(m) { mode = m; if (m === "num") pickNumbers(); index = 0; revealed = 0; render(); keepTop(); }
+function showNext() {
+  if (revealed >= TABS[mode].active) return;
+  if (mode === "num") { numShown.add([...Array(10).keys()].find(i => !numShown.has(i))); revealed = numShown.size; }
+  else revealed++;
+  render();
+}
+function next() { if (index < TABS[mode].items.length - 1) { index++; revealed = 0; numShown.clear(); render(); keepTop(); } }
+function prev() { if (index > 0) { index--; revealed = 0; numShown.clear(); render(); keepTop(); } }
+function restart() { if (mode !== "num") shuffle(TABS[mode].items); index = 0; revealed = 0; numShown.clear(); render(); }
+function setMode(m) { mode = m; index = 0; revealed = 0; numShown.clear(); render(); keepTop(); }
 
 el("show").addEventListener("click", showNext);
 el("next").addEventListener("click", next);
